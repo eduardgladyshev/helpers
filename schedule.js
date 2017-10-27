@@ -1,11 +1,11 @@
 let request      = require('superagent');
 let moment       = require('moment');
 let argv         = require('minimist')(process.argv.slice(2));
-let days         = argv.days        || argv.d || 1;
-let timeStart    = argv['time-start']  || argv.t || '10:00';
 let seanceCount  = argv['count-seance'] || argv.c || 1;
-let playserver   = argv.playserver  || argv.p || 'doremi'
-let env          = argv.env || argv.e;
+let playserver   = argv.playserver      || argv.p || 'doremi'
+let timeStart    = argv['time-start']   || argv.t || '10:00';
+let days         = argv.days            || argv.d || 1;
+let env          = argv.env             || argv.e;
 let url          = (env == 'dev') ? 'http://master.dev.kinoplan24.ru' : 'https://kinoplan24.ru';
 let user         = require('./user');
 let seances      = null;
