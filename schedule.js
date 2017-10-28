@@ -7,7 +7,7 @@ let timeStart    = argv['time-start']   || argv.t || '10:00';
 let days         = argv.days            || argv.d || 1;
 let env          = argv.env             || argv.e;
 let url          = (env == 'dev') ? 'http://master.dev.kinoplan24.ru' : 'https://kinoplan24.ru';
-let user         = require('./user');
+let user         = require('./user.conf');
 let seances      = null;
 let cinemaId;
 let hall;
