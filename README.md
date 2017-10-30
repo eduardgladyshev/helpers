@@ -16,7 +16,7 @@ Options:
   -d, --days            Count days, from tody.  Default - 1.
   -t, --time-start      Seance time start. Default - 10:00.
   -c, --count-seances   Count seances for day. Default -1.
-  -p, --playservers     Set hall with playservers: 'doremi', 'dolby' (pro7), 'christie' (pro1339). Default - doremi.
+  -p, --playservers     Set hall with playservers: 'doremi','dolby'(pro7),'christie'(pro1339). Default - doremi.
   
   -e, --env             Set 'dev' enviroment (master.dev).
 ```
