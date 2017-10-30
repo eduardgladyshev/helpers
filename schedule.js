@@ -1,32 +1,35 @@
 let request      = require('superagent');
 let moment       = require('moment');
 let argv         = require('minimist')(process.argv.slice(2));
+let user         = require('./user.conf');
 let seanceCount  = argv['count-seance'] || argv.c || 1;
-let playserver   = argv.playserver      || argv.p || 'doremi'
 let timeStart    = argv['time-start']   || argv.t || '10:00';
+let playserver   = argv.playserver      || argv.p || 'doremi'
 let days         = argv.days            || argv.d || 1;
 let env          = argv.env             || argv.e;
 let url          = (env == 'dev') ? 'http://master.dev.kinoplan24.ru' : 'https://kinoplan24.ru';
-let user         = require('./user.conf');
 let seances      = null;
+let releaseId;
 let cinemaId;
 let hall;
 
 let agent = request.agent();
-moment.locale('ru', {week:{dow: 4}});
 
 switch (playserver){
   case 'doremi':
-    hall     = 30255;
-    cinemaId = 1803;
+    hall      = 30255;
+    cinemaId  = 1803;
+    releaseId = 9685;
     break;
   case 'dolby':
-    hall     = 33980;
-    cinemaId = 1803;
+    hall      = 33980;
+    cinemaId  = 1803;
+    releaseId = 9685;
     break;
   case 'christie': 
     hall     = 29186;
     cinemaId = 2670;
+    releaseId = 5727;
     break;
   default:
     throw new Error('wrong playserver name');
@@ -63,10 +66,9 @@ agent
             .query({date_start: `${getDate()}`, date_end: `${getDate(days)}`});
   })
   .then(res => {
-    console.log('Get seances', res.status);
-
     seances = res.body.seances.filter(i => i.hall_id == hall);
-    // return i.hall_id == hall && moment(i.date_start).isBetween(getDate(), getDate(days), null, '[]');
+    
+    console.log('Get seances', res.status);
     console.log('Found seances: ', seances.length);
 
     if(seances.length) {
@@ -83,7 +85,7 @@ agent
 function addSeances() {
   let schedule = [];
   let seances = [];
-  let seance = {release_id:9685,hall_id: hall,formats:[1],title:null,duration:null}
+  let seance = {release_id: releaseId,hall_id: hall,formats:[1],title:null,duration:null}
 
   for(let i = 0; i < seanceCount; ++i) {
     seances.push(seance);
