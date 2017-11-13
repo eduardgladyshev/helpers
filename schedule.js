@@ -6,6 +6,7 @@ let seanceCount  = argv['count-seance'] || argv.c || 1;
 let timeStart    = argv['time-start']   || argv.t || '10:00';
 let playserver   = argv.playserver      || argv.p || 'doremi'
 let days         = argv.days            || argv.d || 1;
+let offset       = argv.offset          || argv.o || 0;
 let env          = argv.env             || argv.e;
 let url          = (env == 'dev') ? 'http://master.dev.kinoplan24.ru' : 'https://kinoplan24.ru';
 let seances      = null;
@@ -36,11 +37,15 @@ switch (playserver){
 }
 
 
-function getDate(d){
-  if(d > 1){
-    return moment().add(d - 1, 'd').format('YYYY-MM-DD');
+function getStartDate(){
+  return moment().add(offset, 'd').format('YYYY-MM-DD');
+}
+
+function getEndDate(){
+  if(days > 1){
+    return moment().add(days - 1 + offset, 'd').format('YYYY-MM-DD');
   } else {
-    return moment().format('YYYY-MM-DD');
+    return moment().add(offset, 'd').format('YYYY-MM-DD');
   }
 }
 
@@ -53,7 +58,6 @@ function checkSales(seances){
 }
 
 
-
 agent
   .post(`${url}/login`)
   .type('form')
@@ -63,7 +67,7 @@ agent
 
     return agent.
             get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
-            .query({date_start: `${getDate()}`, date_end: `${getDate(days)}`});
+            .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
   })
   .then(res => {
     seances = res.body.seances.filter(i => i.hall_id == hall);
@@ -81,7 +85,6 @@ agent
   );
 
 
-
 function addSeances() {
   let schedule = [];
   let seances = [];
@@ -90,9 +93,10 @@ function addSeances() {
   for(let i = 0; i < seanceCount; ++i) {
     seances.push(seance);
   }
-  
+  console.log('days', days);
+
   for(let i = 0; i < days; ++i){
-    let day = {date_start: moment().add(i, 'd').format('YYYY-MM-DD') ,time_start: timeStart,seances: seances};
+    let day = {date_start: moment().add(i + offset, 'd').format('YYYY-MM-DD') ,time_start: timeStart,seances: seances};
     schedule.push(day)
   }
 
@@ -111,7 +115,7 @@ function addSeances() {
       return agent
         .put(`${url}/api/schedule/cinema/${cinemaId}/approve`)
         .set('Content-Type', 'application/json')
-        .send(`{"date_start":"${getDate()}","date_end":"${getDate(days)}","hall_id":${hall},"approved":true}`)
+        .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","hall_id":${hall},"approved":true}`)
     })
     .then(res => {
       console.log('Approve schedule', res.status);
@@ -119,7 +123,7 @@ function addSeances() {
       return agent
         .post(`${url}/api/tms/shows/v2/${cinemaId}/generate`)
         .set('Content-Type', 'application/json')
-        .send(`{"date_start":"${getDate()}","date_end":"${getDate(days)}","halls":[${hall}]}`)
+        .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","halls":[${hall}]}`)
     })
     .then(res => {
       console.log('Generate SPLs', res.status);
@@ -128,14 +132,13 @@ function addSeances() {
 }
 
 
-
 function removeSeances(){
   checkSales(seances);
 
   agent
     .put(`${url}/api/schedule/cinema/${cinemaId}/approve`)
     .set('Content-Type', 'application/json')
-    .send(`{"date_start":"${getDate()}","date_end":"${getDate(days)}","hall_id":${hall},"approved":false}`)
+    .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","hall_id":${hall},"approved":false}`)
     .then(res => {
       console.log('Unapprove', res.status);
 
@@ -153,6 +156,3 @@ function removeSeances(){
     })
     .catch(err => console.log(err))
 }
-
-
-
