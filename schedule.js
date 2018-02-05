@@ -8,7 +8,7 @@ let playserver   = argv.playserver      || argv.p || 'doremi'
 let days         = argv.days            || argv.d || 1;
 let offset       = argv.offset          || argv.o || 0;
 let env          = argv.env             || argv.e;
-let url          = (env == 'dev') ? 'http://master.dev.kinoplan24.ru' : 'https://kinoplan24.ru';
+let url          = (env == 'dev') ? 'http://stage2.kinoplan.tk' : 'https://kinoplan24.ru';
 let seances      = null;
 let releaseId;
 let cinemaId;
@@ -54,35 +54,7 @@ function checkSales(seances){
 
   if(seancesWithSales.length) throw new Error('Has open sale seances');
 
-  //TODO remove sales from mongo
 }
-
-
-agent
-  .post(`${url}/login`)
-  .type('form')
-  .send({email: user.email, password: user.password})
-  .then(res => {
-    console.log('Login', res.body);
-
-    return agent.
-            get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
-            .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
-  })
-  .then(res => {
-    seances = res.body.seances.filter(i => i.hall_id == hall);
-    
-    console.log('Get seances', res.status);
-    console.log('Found seances: ', seances.length);
-
-    if(seances.length) {
-      removeSeances();
-    } else addSeances();
-
-  })
-  .catch(err => 
-    console.log('err', err)
-  );
 
 
 function addSeances() {
@@ -93,7 +65,6 @@ function addSeances() {
   for(let i = 0; i < seanceCount; ++i) {
     seances.push(seance);
   }
-  console.log('days', days);
 
   for(let i = 0; i < days; ++i){
     let day = {date_start: moment().add(i + offset, 'd').format('YYYY-MM-DD') ,time_start: timeStart,seances: seances};
@@ -110,7 +81,7 @@ function addSeances() {
       let countAdvertising = res.body[0].advertising.filter(i => i.length > 4).length;
 
       console.log('Add seances', res.status);
-      console.log('Count advertising:', countAdvertising);
+      // console.log('Count advertising:', countAdvertising);
 
       return agent
         .put(`${url}/api/schedule/cinema/${cinemaId}/approve`)
@@ -126,7 +97,7 @@ function addSeances() {
         .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","halls":[${hall}]}`)
     })
     .then(res => {
-      console.log('Generate SPLs', res.status);
+      console.log(`Generate SPLs ${res.status}\n`);
     })
     .catch(err => console.log(err))
 }
@@ -156,3 +127,29 @@ function removeSeances(){
     })
     .catch(err => console.log(err))
 }
+
+agent
+  .post(`${url}/login`)
+  .type('form')
+  .send({email: user.email, password: user.password})
+  .then(res => {
+    console.log('\nLogin');
+
+    return agent.
+            get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
+            .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
+  })
+  .then(res => {
+    seances = res.body.seances.filter(i => i.hall_id == hall);
+    
+    console.log('Get seances', res.status);
+    console.log('Found seances: ', seances.length);
+
+    if(seances.length) {
+      removeSeances();
+    } else addSeances();
+
+  })
+  .catch(err => {
+    console.log('err', err)
+  });
