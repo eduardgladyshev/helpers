@@ -8,7 +8,7 @@ let playserver   = argv.playserver      || argv.p || 'doremi'
 let days         = argv.days            || argv.d || 1;
 let offset       = argv.offset          || argv.o || 0;
 let env          = argv.env             || argv.e;
-let url          = (env == 'dev') ? 'http://stage2.kinoplan.tk' : 'https://kinoplan24.ru';
+let url          = (env == 'stage') ? 'http://stage2.kinoplan.tk' : 'https://kinoplan24.ru';
 let seances      = null;
 let releaseId;
 let cinemaId;
