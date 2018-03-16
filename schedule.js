@@ -8,6 +8,7 @@ let playserver   = argv.playserver      || argv.p || 'doremi'
 let days         = argv.days            || argv.d || 1;
 let offset       = argv.offset          || argv.o || 0;
 let env          = argv.env             || argv.e;
+let onlySchedule = argv.s || false;
 let url          = (env == 'stage') ? 'http://stage2.kinoplan.tk' : 'https://kinoplan24.ru';
 let seances      = null;
 let releaseId;
@@ -25,7 +26,7 @@ switch (playserver){
   case 'dolby':
     hall      = 33980;
     cinemaId  = 1803;
-    releaseId = 9685;
+    releaseId = 10135;
     break;
   case 'christie': 
     hall     = 29186;
@@ -91,17 +92,21 @@ function addSeances() {
     .then(res => {
       console.log('Approve schedule', res.status);
 
-      return agent
-        .post(`${url}/api/tms/shows/v2/${cinemaId}/generate`)
-        .set('Content-Type', 'application/json')
-        .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","halls":[${hall}]}`)
-    })
-    .then(res => {
-      console.log(`Generate SPLs ${res.status}\n`);
+      if(!onlySchedule) generateSpls();
     })
     .catch(err => console.log(err))
 }
 
+function generateSpls(){
+  return agent
+  .post(`${url}/api/tms/shows/v2/${cinemaId}/generate`)
+  .set('Content-Type', 'application/json')
+  .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","halls":[${hall}]}`)
+  .then(res => {
+    console.log(`Generate SPLs ${res.status}\n`);
+  })
+  .catch(err => console.log(err));
+}
 
 function removeSeances(){
   checkSales(seances);
