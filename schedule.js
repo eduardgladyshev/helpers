@@ -1,19 +1,19 @@
-let request      = require('superagent');
-let moment       = require('moment');
-let argv         = require('minimist')(process.argv.slice(2));
-let user         = require('./user.conf');
-let seanceCount  = argv['count-seance'] || argv.c || 1;
-let timeStart    = argv['time-start']   || argv.t || '10:00';
-let playserver   = argv.playserver      || argv.p || 'doremi'
-let days         = argv.days            || argv.d || 1;
-let offset       = argv.offset          || argv.o || 0;
-let env          = argv.env             || argv.e;
-let onlySchedule = argv.s || false;
-let url          = (env == 'stage') ? 'http://stage2.kinoplan.tk' : 'https://kinoplan24.ru';
-let seances      = null;
-let releaseId;
-let cinemaId;
-let hall;
+let request      = require('superagent'),
+    moment       = require('moment'),
+    argv         = require('minimist')(process.argv.slice(2)),
+    user         = require('./user.conf'),
+    seanceCount  = argv['count-seance'] || argv.c || 1,
+    timeStart    = argv['time-start']   || argv.t || '10:00',
+    playserver   = argv.playserver      || argv.p || 'doremi',
+    days         = argv.days            || argv.d || 1,
+    offset       = argv.offset          || argv.o || 0,
+    env          = argv.env             || argv.e,
+    onlySchedule = argv.s || false,
+    url          = (env == 'stage') ? 'http://stage2.kinoplan.tk' : 'https://kinoplan24.ru',
+    seances      = null,
+    releaseId,
+    cinemaId,
+    hall;
 
 let agent = request.agent();
 
@@ -29,14 +29,13 @@ switch (playserver){
     releaseId = 10135;
     break;
   case 'christie': 
-    hall     = 29186;
-    cinemaId = 2670;
+    hall      = 29186;
+    cinemaId  = 2670;
     releaseId = 5727;
     break;
   default:
     throw new Error('wrong playserver name');
 }
-
 
 function getStartDate(){
   return moment().add(offset, 'd').format('YYYY-MM-DD');
@@ -54,11 +53,9 @@ function checkSales(seances){
   let seancesWithSales = seances.filter(i => i.is_on_sale);
 
   if(seancesWithSales.length) throw new Error('Has open sale seances');
-
 }
 
-
-function addSeances() {
+async function addSeances() {
   let schedule = [];
   let seances = [];
   let seance = {release_id: releaseId,hall_id: hall,formats:[1],title:null,duration:null}
@@ -74,87 +71,81 @@ function addSeances() {
 
   schedule = JSON.stringify(schedule);
 
-  agent
+  let seancesRes = await agent
     .post(`${url}/api/schedule/cinema/${cinemaId}/seances`)
     .set('Content-Type', 'application/json')
-    .send(schedule)
-    .then(res => {
-      let countAdvertising = res.body[0].advertising.filter(i => i.length > 4).length;
+    .send(schedule);
 
-      console.log('Add seances', res.status);
-      // console.log('Count advertising:', countAdvertising);
+  console.log('Add seances', seancesRes.status);
 
-      return agent
-        .put(`${url}/api/schedule/cinema/${cinemaId}/approve`)
-        .set('Content-Type', 'application/json')
-        .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","hall_id":${hall},"approved":true}`)
-    })
-    .then(res => {
-      console.log('Approve schedule', res.status);
+  let countAdvertising = seancesRes.body[0].advertising.filter(i => i.length > 4).length;
 
-      if(!onlySchedule) generateSpls();
-    })
-    .catch(err => console.log(err))
+  changeApproved(true);
+
+  if(!onlySchedule) generateSpls();
 }
 
-function generateSpls(){
-  return agent
-  .post(`${url}/api/tms/shows/v2/${cinemaId}/generate`)
-  .set('Content-Type', 'application/json')
-  .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","halls":[${hall}]}`)
-  .then(res => {
-    console.log(`Generate SPLs ${res.status}\n`);
-  })
-  .catch(err => console.log(err));
-}
-
-function removeSeances(){
-  checkSales(seances);
-
-  agent
+async function changeApproved(boolean){
+  let approveRes = await agent
     .put(`${url}/api/schedule/cinema/${cinemaId}/approve`)
     .set('Content-Type', 'application/json')
-    .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","hall_id":${hall},"approved":false}`)
-    .then(res => {
-      console.log('Unapprove', res.status);
+    .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","hall_id":${hall},"approved":${boolean}}`);
 
-      let seanceIds = JSON.stringify(seances.map(i => i.id));
+  console.log(`Schedule ${boolean ? 'approved' : 'unapproved'}`, approveRes.status);
+} 
 
-      return agent
-        .delete(`${url}/api/schedule/cinema/${cinemaId}/seances`)
-        .set('Content-Type', 'application/json')
-        .send(seanceIds)
-    })
-    .then(res => {
-      console.log('Delete seances', res.status)
+async function generateSpls(){
+  let genRes = await agent
+    .post(`${url}/api/tms/shows/v2/${cinemaId}/generate`)
+    .set('Content-Type', 'application/json')
+    .send(`{"date_start":"${getStartDate()}","date_end":"${getEndDate()}","halls":[${hall}]}`);
 
-      addSeances();      
-    })
-    .catch(err => console.log(err))
+  console.log(`Generate SPLs ${genRes.status}\n`);
 }
 
-agent
-  .post(`${url}/login`)
-  .type('form')
-  .send({email: user.email, password: user.password})
-  .then(res => {
-    console.log('\nLogin');
+async function removeSeances(){
+  checkSales(seances);
+  changeApproved(false);
 
-    return agent.
-            get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
-            .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
-  })
-  .then(res => {
-    seances = res.body.seances.filter(i => i.hall_id == hall);
-    
-    console.log('Get seances', res.status);
-    console.log('Found seances: ', seances.length);
+  let seanceIds = JSON.stringify(seances.map(i => i.id));
 
-    if(seances.length) {
-      removeSeances();
-    } else addSeances();
+  console.log('ids', seanceIds);
 
-  })
-  .catch(err => {
-    console.log('err', err)
-  });
+  let deleteSeancesRes = await agent
+    .delete(`${url}/api/schedule/cinema/${cinemaId}/seances`)
+    .set('Content-Type', 'application/json')
+    .send(seanceIds);
+
+  console.log('Delete seances', deleteSeancesRes.status);
+
+  let seancesRes = await agent
+    .get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
+    .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
+
+  console.log('seancesAfterDeleteng', seancesRes.body.seances.filter(i => i.hall_id == hall));
+
+  addSeances(); 
+}
+
+(async function(){
+  await agent
+    .post(`${url}/login`)
+    .type('form')
+    .send({email: user.email, password: user.password});
+
+  console.log('\nLogin');
+
+  let seancesRes = await agent
+    .get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
+    .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
+
+  seances = seancesRes.body.seances.filter(i => i.hall_id == hall);
+      
+  console.log('Get seances', seancesRes.status);
+  console.log('Found seances: ', seances.length);
+
+  if(seances.length) {
+    removeSeances();
+  } else addSeances();
+
+}());    
