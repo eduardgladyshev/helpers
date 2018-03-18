@@ -5,7 +5,7 @@ Install:
 Usage: 
 
 ```
-  npm run addSchedule -- [options]  add approved schedule
+  npm run addSchedule -- [options]  add schedule
   npm run genSpls -- [options]      add schedule and generate spls
 ```
 
