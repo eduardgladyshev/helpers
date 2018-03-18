@@ -11,7 +11,7 @@ Usage:
 
 Example:
 
-```node schedule.js -d 7 -t 12:00 -p dolby```
+```npm genSpls -- -d 7 -t 12:00 -p dolby```
 
 Options:
 
