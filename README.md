@@ -4,7 +4,10 @@ Install:
 
 Usage: 
 
-```node schedule.js [options]```
+```
+  npm run addSchedule -- [options]  add approved schedule
+  npm run genSpls -- [options]      add schedule and generate spls
+```
 
 Example:
 
