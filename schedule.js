@@ -103,39 +103,43 @@ function removeSeances(){
 }
 
 (async function(){
-  await agent
-    .post(`${url}/login`)
-    .type('form')
-    .send({email: user.email, password: user.password});
+  try{
+    await agent
+      .post(`${url}/login`)
+      .type('form')
+      .send({email: user.email, password: user.password});
 
-  console.log('\nLogin');
+    console.log('\nLogin');
 
-  let seancesRes = await agent
-    .get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
-    .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
+    let seancesRes = await agent
+      .get(`${url}/api/schedule/cinema/${cinemaId}/seances`)
+      .query({date_start: `${getStartDate()}`, date_end: `${getEndDate()}`});
 
-  seances = seancesRes.body.seances.filter(i => i.hall_id == hall);
-      
-  console.log('Get seances', seancesRes.status);
-  console.log('Found seances: ', seances.length);
+    seances = seancesRes.body.seances.filter(i => i.hall_id == hall);
+        
+    console.log('Get seances', seancesRes.status);
+    console.log('Found seances: ', seances.length);
 
-  if(seances.length) {
-    let approveRes = await changeApproved(false);
-    console.log('Schedule unapproved', approveRes.status);
+    if(seances.length) {
+      let approveRes = await changeApproved(false);
+      console.log('Schedule unapproved', approveRes.status);
 
-    let removeRes = await removeSeances();
-    console.log('Delete seances', removeRes.status);
-  }
+      let removeRes = await removeSeances();
+      console.log('Delete seances', removeRes.status);
+    }
 
-  let addRes = await addSeances();
-  console.log('Add seances', addRes.status);
+    let addRes = await addSeances();
+    console.log('Add seances', addRes.status);
 
-  let approveRes = await changeApproved(true);
-  console.log('Approve schedule', approveRes.status);
+    let approveRes = await changeApproved(true);
+    console.log('Approve schedule', approveRes.status);
 
-  if(!onlySchedule) {
-    let genRes = await generateSpls();
-    console.log(`Generate SPLs ${genRes.status}\n`);
+    if(!onlySchedule) {
+      let genRes = await generateSpls();
+      console.log(`Generate SPLs ${genRes.status}\n`);
+    }
+  } catch (e){
+    console.log(e);
   }
 
 }());    
