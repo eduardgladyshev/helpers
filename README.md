@@ -4,11 +4,14 @@ Install:
 
 Usage: 
 
-```node schedule.js [options]```
+```
+  npm run addSchedule -- [options]  add schedule
+  npm run genSpls -- [options]      add schedule and generate spls
+```
 
 Example:
 
-```node schedule.js -d 7 -t 12:00 -p dolby```
+```npm genSpls -- -d 7 -t 12:00 -p dolby```
 
 Options:
 
