@@ -6,87 +6,68 @@ require('console.table');
 let cinemas  = [];
 let cinemaList = [];
 
-
 const url = 'mongodb://10.30.0.8:27017';
-
-
 const dbName = 'kinoplan';
 
+try{
+  (async function(){
+    cinemas = await new Promise(function(resolve){
+      MongoClient.connect(url, function(err, client) {
+        if(err) throw err; 
 
-MongoClient.connect(url, function(err, client) {
-  if(err) throw err; 
-  console.log("Connected successfully to mongo");
+        const db = client.db(dbName);
+        let cinemaCollection = db.collection('cinema');
 
-  const db = client.db(dbName);
+        cinemaCollection
+          .find({$or: [{"id": 1803}, {"id": 2670}, {"cinema_network.id": 484}, {"cinema_network.id": 512}] })
+          .toArray(function(err, res){
+            if(err) throw err;
+            resolve(res);
+          })
 
-  let cinemaCollection = db.collection('cinema');
-  cinemaCollection.find({'owner': })
+        client.close();
+      });  
+    });
 
-  client.close();
-});
+    cinemas.forEach(i => {
+      cinemaList.push({'Название': i.title.ru, id: i.id, node: i.dd24_pro});
+    });
+        
+    console.table('Список кинотеатров', cinemaList);
+    handleCinemaId();
+  }());
+
+} catch(e){
+  console.log(e);
+}
 
 
+function handleCinemaId(){
 
+  process.stdin.on('readable', () => {
+    let cinemaId = process.stdin.read();
 
+    if(!+cinemaId && cinemaId !== null) {
+      console.table('Список кинотеатров', cinemaList);
+    }
 
+    cinemas.forEach(i => {
+      let halls = []; 
 
+      if(i.id == cinemaId){
+        i.halls.forEach(i => {
+          halls.push({'Номер': i.title, id: i.id});
+        });
 
+        console.table('Список залов', halls);
+      } 
+    });
 
+    process.stdout.write(`Id кинотеатра: `);
+  });
 
-
-
-
-
-// let agent = request.agent();
-
-// agent
-//   .post(`https://kinoplan24.ru/login`)
-//   .type('form')
-//   .send({email: user.email, password: user.password})
-//   .then(res => {
-//     return agent.
-//             get(`https://kinoplan24.ru/api/user/v2/0`);
-//   })
-//   .then(res => {
-//     cinemas = res.body.cinema;
-
-//     cinemas.forEach(i => {
-//       cinemaList.push({'Название': i.title.ru, id: i.id, node: i.dd24_pro});
-//     });
-    
-//     console.table('Список кинотеатров', cinemaList);
-
-//     handleCinemaId();
-
-//   })
-//   .catch(err => console.log('err', err));
-  
-// function handleCinemaId(){
-
-//   process.stdin.on('readable', () => {
-//     let cinemaId = process.stdin.read();
-
-//     if(!+cinemaId && cinemaId !== null) {
-//       console.table('Список кинотеатров', cinemaList);
-//     }
-
-//     cinemas.forEach(i => {
-//       let halls = []; 
-
-//       if(i.id == cinemaId){
-//         i.halls.forEach(i => {
-//           halls.push({'Номер': i.title, id: i.id});
-//         });
-
-//         console.table('Список залов', halls);
-//       } 
-//     });
-
-//     process.stdout.write(`Id кинотеатра: `);
-//   });
-
-//   process.stdin.on('end', () => {
-//     process.stdout.write('end');
-//   });
-// }
+  process.stdin.on('end', () => {
+    process.stdout.write('end');
+  });
+}
 
