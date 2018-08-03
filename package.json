@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "kp": "./main.js"
+  },
   "scripts": {
     "addSchedule": "node schedule -s true",
     "genSpls": "node schedule"
@@ -11,10 +14,8 @@
   "license": "ISC",
   "dependencies": {
     "beautiful-log": "^1.3.0",
-    "colour": "^0.7.1",
     "commander": "^2.16.0",
     "console.table": "^0.9.1",
-    "minimist": "^1.2.0",
     "moment": "^2.19.1",
     "mongodb": "^3.0.10",
     "node-pretty-log": "^1.1.0",

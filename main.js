@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 const program    = require('commander');
 const cancelCopy = require('./lib/cancel_copy');
 const generate   = require('./lib/generate');
@@ -23,6 +25,7 @@ program
   .option('-c --count-seances <count>', 'Count ceances for day')
   .option('-d --days <days>', 'Count of days')
   .option('-o --offset <offset>', 'Forward offset relative to the current day')
+  .option('-r --release <release>', 'Release id')
   .description('Clear old seances and add new')
   .action(async(options) => {
   	await createSchedule(options);
@@ -37,6 +40,7 @@ program
   .option('-c --count-seances <count>', 'Count ceances for day')
   .option('-d --days <days>', 'Count of days')
   .option('-o --offset <offset>', 'Forward offset relative to the current day')
+  .option('-r --release <release>', 'Release id')
   .description('Add new seances and generate playlists')
   .action(async(options) => {
     await generate(options);
