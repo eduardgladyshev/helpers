@@ -2,24 +2,14 @@ Install:
 
 ```npm install```
 
-Usage: 
+Usage example: 
 
 ```
-  npm run addSchedule -- [options]  add schedule
-  npm run genSpls -- [options]      add schedule and generate spls
+  ./help.js add-seances -t 13:00 -s
 ```
 
-Example:
-
-```npm genSpls -- -d 7 -t 12:00 -p dolby```
-
-Options:
+For help about command: 
 
 ```
-  -d, --days            Count days, from tody.  Default - '1'.
-  -t, --time-start      Seance time start. Default - '10:00'.
-  -c, --count-seances   Count seances for day. Default - '1'.
-  -p, --playservers     Set hall with playservers: 'doremi','dolby'(pro7),'christie'(pro1339). Default - doremi.
-  -o, --ofset           Set schedule ofset.
-  -e, --env             Set 'stage' enviroment.
+  ./help.js --help
 ```
